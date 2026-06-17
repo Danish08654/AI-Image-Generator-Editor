@@ -6,7 +6,7 @@ from PIL import Image
 import requests
 from io import BytesIO
 from generator import generate_image
-from services.editor import edit_image
+from editor import edit_image
 from services.prompt_engine import enhance_prompt
 
 #  PAGE CONFIG 
