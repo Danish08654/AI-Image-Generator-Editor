@@ -14,30 +14,63 @@ from prompt_engine import enhance_prompt
 # PAGE CONFIG
 st.set_page_config(
     page_title="AI Image Generator and Editor",
-    page_icon="",
+    page_icon="🎨",
     layout="wide"
 )
 
 # HEADER
 st.markdown(
-    "<h1 style='text-align:center;'> AI Image Generator and Editor</h1>",
+    "<h1 style='text-align:center;'>🎨 AI Image Generator and Editor</h1>",
     unsafe_allow_html=True
 )
 st.markdown("---")
 
+# API KEY VALIDATION
+if "openai_api_key" not in st.session_state:
+    st.session_state.openai_api_key = os.getenv("OPENAI_API_KEY", "")
+
+# Sidebar for API key input
+with st.sidebar:
+    st.subheader("⚙️ Configuration")
+    api_key_input = st.text_input(
+        "Enter your OpenAI API Key",
+        value=st.session_state.openai_api_key,
+        type="password",
+        help="Get your API key from https://platform.openai.com/api-keys"
+    )
+    
+    if api_key_input:
+        st.session_state.openai_api_key = api_key_input
+        os.environ["OPENAI_API_KEY"] = api_key_input
+        st.success("✅ API Key set successfully!")
+    
+    st.info(
+        "💡 **How to get an API key:**\n\n"
+        "1. Go to https://platform.openai.com\n"
+        "2. Sign in or create account\n"
+        "3. Navigate to API keys\n"
+        "4. Create new secret key\n"
+        "5. Copy and paste here"
+    )
+
+# Check if API key is set
+if not st.session_state.openai_api_key:
+    st.error("❌ **API Key Missing!** Please enter your OpenAI API key in the sidebar to continue.")
+    st.stop()
+
 # MODE SELECTION
 mode = st.radio(
     "Choose Mode",
-    [" Generate Image", " Edit Image"],
+    ["🖼️ Generate Image", "✏️ Edit Image"],
     horizontal=True
 )
 
 # GENERATE MODE
-if mode == "Generate Image":
+if mode == "🖼️ Generate Image":
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        st.subheader(" Prompt Panel")
+        st.subheader("📝 Prompt Panel")
         prompt = st.text_area(
             "Describe your image",
             placeholder="e.g. futuristic city at night with neon lights",
@@ -56,19 +89,19 @@ if mode == "Generate Image":
             help="Larger sizes may take longer to generate"
         )
         
-        generate_btn = st.button(" Generate Image", type="primary", use_container_width=True)
+        generate_btn = st.button("🚀 Generate Image", type="primary", use_container_width=True)
     
     with col2:
-        st.subheader(" Output Preview")
+        st.subheader("🎯 Output Preview")
         
         if generate_btn:
             if not prompt.strip():
-                st.error(" Please enter a prompt to generate an image")
+                st.error("❌ Please enter a prompt to generate an image")
             else:
                 try:
-                    with st.spinner(" Generating your image..."):
+                    with st.spinner("✨ Generating your image..."):
                         final_prompt = enhance_prompt(prompt)
-                        st.info(f" **Enhanced Prompt:** {final_prompt}")
+                        st.info(f"📌 **Enhanced Prompt:** {final_prompt}")
                         
                         image_url = generate_image(
                             final_prompt,
@@ -86,23 +119,23 @@ if mode == "Generate Image":
                         img_byte_arr.seek(0)
                         
                         st.download_button(
-                            label="Download Image",
+                            label="💾 Download Image",
                             data=img_byte_arr,
                             file_name="generated_image.png",
                             mime="image/png"
                         )
                         
-                        st.success("Image generated successfully!")
+                        st.success("✅ Image generated successfully!")
                 
                 except Exception as e:
-                    st.error(f" Error generating image: {str(e)}")
+                    st.error(f"❌ Error generating image: {str(e)}")
 
 # EDIT MODE
 else:
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        st.subheader(" Upload Panel")
+        st.subheader("📤 Upload Panel")
         uploaded = st.file_uploader(
             "Upload Image",
             type=["png", "jpg", "jpeg"]
@@ -114,10 +147,10 @@ else:
             height=150
         )
         
-        edit_btn = st.button(" Apply AI Edit", type="primary", use_container_width=True)
+        edit_btn = st.button("✏️ Apply AI Edit", type="primary", use_container_width=True)
     
     with col2:
-        st.subheader(" Output Preview")
+        st.subheader("🎨 Output Preview")
         
         if uploaded:
             image = Image.open(uploaded)
@@ -125,12 +158,12 @@ else:
         
         if uploaded and edit_btn:
             if not prompt.strip():
-                st.error("Please enter edit instructions")
+                st.error("❌ Please enter edit instructions")
             else:
                 try:
-                    with st.spinner(" Applying AI edit..."):
+                    with st.spinner("✨ Applying AI edit..."):
                         final_prompt = enhance_prompt(prompt)
-                        st.info(f" **Enhanced Prompt:** {final_prompt}")
+                        st.info(f"📌 **Enhanced Prompt:** {final_prompt}")
                         
                         result = edit_image(
                             image,
@@ -146,16 +179,16 @@ else:
                         img_byte_arr.seek(0)
                         
                         st.download_button(
-                            label=" Download Edited Image",
+                            label="💾 Download Edited Image",
                             data=img_byte_arr,
                             file_name="edited_image.png",
                             mime="image/png"
                         )
                         
-                        st.success(" Image edited successfully!")
+                        st.success("✅ Image edited successfully!")
                 
                 except Exception as e:
-                    st.error(f" Error editing image: {str(e)}")
+                    st.error(f"❌ Error editing image: {str(e)}")
 
 st.markdown("---")
 st.markdown(
