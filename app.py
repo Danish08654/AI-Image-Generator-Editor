@@ -29,14 +29,6 @@ st.markdown("---")
 if "openai_api_key" not in st.session_state:
     st.session_state.openai_api_key = os.getenv("OPENAI_API_KEY", "")
 
-# Sidebar for API key input
-with st.sidebar:
-    st.subheader("⚙️ Configuration")
-    api_key_input = st.text_input(
-        "Enter your OpenAI API Key",
-        value=st.session_state.openai_api_key,
-        type="password",
-        help="Get your API key from https://platform.openai.com/api-keys"
     )
     
     if api_key_input:
