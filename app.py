@@ -44,15 +44,6 @@ with st.sidebar:
         os.environ["OPENAI_API_KEY"] = api_key_input
         st.success(" API Key set successfully!")
     
-    st.info(
-        "💡 **How to get an API key:**\n\n"
-        "1. Go to https://platform.openai.com\n"
-        "2. Sign in or create account\n"
-        "3. Navigate to API keys\n"
-        "4. Create new secret key\n"
-        "5. Copy and paste here"
-    )
-
 # Check if API key is set
 if not st.session_state.openai_api_key:
     st.error(" **API Key Missing!** Please enter your OpenAI API key in the sidebar to continue.")
