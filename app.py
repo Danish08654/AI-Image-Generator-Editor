@@ -29,8 +29,6 @@ st.markdown("---")
 if "openai_api_key" not in st.session_state:
     st.session_state.openai_api_key = os.getenv("OPENAI_API_KEY", "")
 
-    )
-    
     if api_key_input:
         st.session_state.openai_api_key = api_key_input
         os.environ["OPENAI_API_KEY"] = api_key_input
