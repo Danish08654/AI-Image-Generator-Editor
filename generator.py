@@ -10,7 +10,7 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 def generate_image(prompt):
 
     response = client.images.generate(
-        model="gpt-image-1",
+        model="dall-e-3" ,
         prompt=prompt,
         size="1024x1024"
     )
