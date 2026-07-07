@@ -1,7 +1,6 @@
 from huggingface_hub import InferenceClient
 from PIL import Image
 from io import BytesIO
-import base64
 
 
 def _pil_to_bytes(image: Image.Image) -> bytes:
@@ -14,21 +13,20 @@ def _resize(image: Image.Image, max_side: int = 512) -> Image.Image:
     w, h = image.size
     if max(w, h) <= max_side:
         return image
+
     scale = max_side / max(w, h)
-    return image.resize((int(w * scale) & ~1, int(h * scale) & ~1), Image.LANCZOS)
+    return image.resize(
+        (int(w * scale) & ~1, int(h * scale) & ~1),
+        Image.LANCZOS,
+    )
 
 
 def edit_image(image: Image.Image, prompt: str, api_key: str = "") -> Image.Image:
-    """
-    Edit an image using HF Serverless Inference API (image-to-image task).
-    Uses stabilityai/stable-diffusion-xl-refiner-1.0 for img2img.
-    Requires a free HF token from https://huggingface.co/settings/tokens
-    """
+
     if not api_key:
         raise RuntimeError(
             "Hugging Face token is required.\n"
-            "Get a FREE token at: https://huggingface.co/settings/tokens\n"
-            "Then paste it in the sidebar."
+            "Get a FREE token at: https://huggingface.co/settings/tokens"
         )
 
     image = _resize(image.convert("RGB"))
@@ -38,12 +36,12 @@ def edit_image(image: Image.Image, prompt: str, api_key: str = "") -> Image.Imag
         api_key=api_key,
     )
 
-   image_bytes = _pil_to_bytes(image)
+    image_bytes = _pil_to_bytes(image)
 
-result = client.image_to_image(
-    image=image_bytes,
-    prompt=prompt,
-    model="timbrooks/instruct-pix2pix",
-)
+    result = client.image_to_image(
+        image=image_bytes,
+        prompt=prompt,
+        model="timbrooks/instruct-pix2pix",
+    )
 
-    return result  # PIL.Image
+    return result
