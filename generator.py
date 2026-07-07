@@ -1,55 +1,39 @@
-import torch
-from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
+from gradio_client import Client
 from PIL import Image
+import shutil, os
 
-_pipeline = None
+# Free public HF Space — no token, no download, no firewall issues
+SPACE = "hysts/stable-diffusion-xl"
 
+_client = None
 
-def _load_pipeline():
-    global _pipeline
-    if _pipeline is not None:
-        return _pipeline
+def _get_client():
+    global _client
+    if _client is None:
+        _client = Client(SPACE)
+    return _client
 
-    model_id = "runwayml/stable-diffusion-v1-5"
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-
-    pipe = StableDiffusionPipeline.from_pretrained(
-        model_id,
-        torch_dtype=dtype,
-        safety_checker=None,
-        requires_safety_checker=False,
-    )
-    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-    pipe = pipe.to(device)
-
-    if device == "cpu":
-        pipe.enable_attention_slicing()
-
-    _pipeline = pipe
-    return _pipeline
-
-
-def generate_image(prompt: str, model: str = "sd15", size: str = "512x512", api_key: str = "") -> Image.Image:
+def generate_image(prompt: str, model: str = "sdxl", size: str = "1024x1024", api_key: str = "") -> Image.Image:
     """
-    Generate an image locally using Stable Diffusion v1.5.
-    First call downloads the model (~4GB). Subsequent calls are fast.
+    Generate image via free Hugging Face Space (hysts/stable-diffusion-xl).
+    No token needed. No local download. Runs on HF servers.
     """
-    try:
-        width, height = map(int, size.split("x"))
-    except ValueError:
-        width, height = 512, 512
+    client = _get_client()
 
-    width = min(width, 768)
-    height = min(height, 768)
-
-    pipe = _load_pipeline()
-
-    result = pipe(
+    result = client.predict(
         prompt=prompt,
-        width=width,
-        height=height,
-        num_inference_steps=25,
+        negative_prompt="blurry, low quality, deformed, watermark, text",
         guidance_scale=7.5,
+        num_inference_steps=25,
+        api_name="/run"
     )
-    return result.images[0]
+
+    # result is a file path to the generated image
+    if isinstance(result, str) and os.path.exists(result):
+        return Image.open(result).convert("RGB")
+    elif isinstance(result, (list, tuple)):
+        path = result[0] if result else None
+        if path and os.path.exists(path):
+            return Image.open(path).convert("RGB")
+
+    raise RuntimeError(f"Unexpected response from Space: {result}")
