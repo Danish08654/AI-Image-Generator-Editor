@@ -14,48 +14,60 @@ st.set_page_config(page_title="AI Image Generator & Editor", page_icon="🎨", l
 st.markdown("<h1 style='text-align:center;'>🎨 AI Image Generator & Editor</h1>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align:center;color:gray;'>"
-    "Powered by Hugging Face Serverless Inference API · Free HF Token Required"
+    "Powered by Hugging Face Serverless Inference API"
     "</p>", unsafe_allow_html=True
 )
 st.markdown("---")
 
+# ── LOAD TOKEN FROM SECRETS (never shown in UI) ────────────────────────────────
+# Priority: st.secrets > environment variable > empty
+def load_token() -> str:
+    # 1. Streamlit secrets (secrets.toml or cloud secrets)
+    try:
+        return st.secrets["HF_TOKEN"]
+    except (KeyError, FileNotFoundError):
+        pass
+    # 2. Environment variable (e.g. set in shell or Docker)
+    return os.getenv("HF_TOKEN", "")
+
+HF_TOKEN = load_token()
+
 # ── SIDEBAR ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.header("🔑 HF Token Setup")
+    st.header("⚙️ Info")
 
-    st.markdown("""
-**Step 1:** Go to [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
-
-**Step 2:** Click **New token** → select **Read** role → Create
-
-**Step 3:** Copy the token (starts with `hf_...`) and paste below
-    """)
-
-    hf_token = st.text_input(
-        "Hugging Face Token",
-        value=os.getenv("HF_TOKEN", ""),
-        type="password",
-        placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxx"
-    )
-    st.session_state["hf_token"] = hf_token
-
-    if hf_token and hf_token.startswith("hf_"):
-        st.success("✅ Token looks valid!")
-    elif hf_token:
-        st.warning("⚠️ Token should start with `hf_`")
+    if HF_TOKEN:
+        st.success("✅ HF Token loaded from secrets")
     else:
-        st.error("❌ Token required to use this app")
+        st.error("❌ HF Token not found in secrets")
+        st.markdown("""
+**To add your token as a secret:**
+
+**Local:** Create `.streamlit/secrets.toml`:
+```toml
+HF_TOKEN = "hf_your_token_here"
+```
+
+**Streamlit Cloud:** Go to your app →
+⚙️ Settings → **Secrets** → add:
+```
+HF_TOKEN = "hf_your_token_here"
+```
+
+Get a free token at:
+[huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+        """)
 
     st.markdown("---")
-    st.markdown("**Models used**")
+    st.markdown("**Models**")
     st.markdown("🖼 Generate: `stable-diffusion-xl-base-1.0`")
     st.markdown("✏️ Edit: `instruct-pix2pix`")
     st.markdown("---")
-    st.info("💡 Free tier: ~100–150 requests/day\n\n⏳ First request may take ~20–30s (cold start)")
+    st.info("⏳ First request may take ~20–30s (cold start)\n\n💡 Free tier: ~100–150 requests/day")
 
 # ── GATE ───────────────────────────────────────────────────────────────────────
-if not st.session_state.get("hf_token", ""):
-    st.warning("👈 Please enter your Hugging Face token in the sidebar to get started.")
+if not HF_TOKEN:
+    st.error("🔑 HF Token not configured. See sidebar instructions to add it as a secret.")
     st.stop()
 
 # ── MODE ───────────────────────────────────────────────────────────────────────
@@ -83,11 +95,7 @@ if mode == "🖼 Generate Image":
                     with st.spinner("⏳ Generating via HF Inference API…"):
                         final_prompt = enhance_prompt(prompt)
                         st.info(f"✨ **Enhanced Prompt:** {final_prompt}")
-                        img = generate_image(
-                            prompt=final_prompt,
-                            size=size_choice,
-                            api_key=st.session_state["hf_token"]
-                        )
+                        img = generate_image(prompt=final_prompt, size=size_choice, api_key=HF_TOKEN)
                         st.image(img, use_container_width=True, caption="Generated Image")
                         buf = BytesIO()
                         img.save(buf, format="PNG")
@@ -121,11 +129,7 @@ else:
                     with st.spinner("⏳ Editing via HF Inference API…"):
                         final_prompt = enhance_prompt(prompt)
                         st.info(f"✨ **Enhanced Prompt:** {final_prompt}")
-                        result = edit_image(
-                            image=image,
-                            prompt=final_prompt,
-                            api_key=st.session_state["hf_token"]
-                        )
+                        result = edit_image(image=image, prompt=final_prompt, api_key=HF_TOKEN)
                         st.image(result, caption="Edited Image", use_container_width=True)
                         buf = BytesIO()
                         result.save(buf, format="PNG")
