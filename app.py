@@ -14,23 +14,51 @@ st.set_page_config(page_title="AI Image Generator & Editor", page_icon="🎨", l
 st.markdown("<h1 style='text-align:center;'>🎨 AI Image Generator & Editor</h1>", unsafe_allow_html=True)
 st.markdown(
     "<p style='text-align:center;color:gray;'>"
-    "Powered by Hugging Face Spaces · No API key · No download · Instant start"
+    "Powered by Hugging Face Serverless Inference API · Free HF Token Required"
     "</p>", unsafe_allow_html=True
 )
 st.markdown("---")
 
+# ── SIDEBAR ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.header("ℹ️ How it works")
-    st.success("✅ **No API key required**\n\nUses free public Hugging Face Spaces — runs on HF servers instantly.")
-    st.markdown("**Spaces used**")
-    st.markdown("🖼 Generate: `hysts/stable-diffusion-xl`")
-    st.markdown("✏️ Edit: `timbrooks/instruct-pix2pix`")
-    st.markdown("---")
-    st.info(
-        "⏳ First request may take ~30s if the Space is sleeping.\n\n"
-        "Subsequent requests are fast (~5–15s)."
-    )
+    st.header("🔑 HF Token Setup")
 
+    st.markdown("""
+**Step 1:** Go to [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+
+**Step 2:** Click **New token** → select **Read** role → Create
+
+**Step 3:** Copy the token (starts with `hf_...`) and paste below
+    """)
+
+    hf_token = st.text_input(
+        "Hugging Face Token",
+        value=os.getenv("HF_TOKEN", ""),
+        type="password",
+        placeholder="hf_xxxxxxxxxxxxxxxxxxxxxxxx"
+    )
+    st.session_state["hf_token"] = hf_token
+
+    if hf_token and hf_token.startswith("hf_"):
+        st.success("✅ Token looks valid!")
+    elif hf_token:
+        st.warning("⚠️ Token should start with `hf_`")
+    else:
+        st.error("❌ Token required to use this app")
+
+    st.markdown("---")
+    st.markdown("**Models used**")
+    st.markdown("🖼 Generate: `stable-diffusion-xl-base-1.0`")
+    st.markdown("✏️ Edit: `instruct-pix2pix`")
+    st.markdown("---")
+    st.info("💡 Free tier: ~100–150 requests/day\n\n⏳ First request may take ~20–30s (cold start)")
+
+# ── GATE ───────────────────────────────────────────────────────────────────────
+if not st.session_state.get("hf_token", ""):
+    st.warning("👈 Please enter your Hugging Face token in the sidebar to get started.")
+    st.stop()
+
+# ── MODE ───────────────────────────────────────────────────────────────────────
 mode = st.radio("Choose Mode", ["🖼 Generate Image", "✏️ Edit Image"], horizontal=True)
 
 # ── GENERATE ──────────────────────────────────────────────────────────────────
@@ -40,7 +68,8 @@ if mode == "🖼 Generate Image":
         st.subheader("📝 Prompt Panel")
         prompt = st.text_area("Describe your image",
             placeholder="e.g. futuristic city at night with neon lights", height=150)
-        size_choice = st.selectbox("Image Size", ["1024x1024", "1152x896", "896x1152", "768x768"])
+        size_choice = st.selectbox("Image Size",
+            ["1024x1024", "1152x896", "896x1152", "768x768"])
         st.caption("💡 Keywords like *anime*, *painting*, *realistic* auto-enhance your prompt.")
         gen_btn = st.button("✨ Generate Image", type="primary", use_container_width=True)
 
@@ -51,16 +80,20 @@ if mode == "🖼 Generate Image":
                 st.error("⚠️ Please enter a prompt.")
             else:
                 try:
-                    with st.spinner("⏳ Generating on Hugging Face servers…"):
+                    with st.spinner("⏳ Generating via HF Inference API…"):
                         final_prompt = enhance_prompt(prompt)
                         st.info(f"✨ **Enhanced Prompt:** {final_prompt}")
-                        img = generate_image(prompt=final_prompt, size=size_choice)
+                        img = generate_image(
+                            prompt=final_prompt,
+                            size=size_choice,
+                            api_key=st.session_state["hf_token"]
+                        )
                         st.image(img, use_container_width=True, caption="Generated Image")
                         buf = BytesIO()
                         img.save(buf, format="PNG")
                         buf.seek(0)
                         st.download_button("⬇️ Download Image", buf, "generated_image.png", "image/png")
-                        st.success("✅ Done!")
+                        st.success("✅ Image generated successfully!")
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
 
@@ -85,10 +118,14 @@ else:
                 st.error("⚠️ Please enter edit instructions.")
             else:
                 try:
-                    with st.spinner("⏳ Editing on Hugging Face servers…"):
+                    with st.spinner("⏳ Editing via HF Inference API…"):
                         final_prompt = enhance_prompt(prompt)
                         st.info(f"✨ **Enhanced Prompt:** {final_prompt}")
-                        result = edit_image(image=image, prompt=final_prompt)
+                        result = edit_image(
+                            image=image,
+                            prompt=final_prompt,
+                            api_key=st.session_state["hf_token"]
+                        )
                         st.image(result, caption="Edited Image", use_container_width=True)
                         buf = BytesIO()
                         result.save(buf, format="PNG")
