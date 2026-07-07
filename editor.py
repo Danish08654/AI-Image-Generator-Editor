@@ -6,7 +6,7 @@ import tempfile
 # Replace this with YOUR Space name
 SPACE_NAME ="https://huggingface.co/spaces/Rd786/DanishZulfiqar"
 
-client = Client(DanishZulfiqar)
+client = Client("DanishZulfiqar")
 
 def edit_image(image: Image.Image, prompt: str, api_key: str = "") -> Image.Image:
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
