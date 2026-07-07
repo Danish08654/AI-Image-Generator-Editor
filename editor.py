@@ -38,10 +38,12 @@ def edit_image(image: Image.Image, prompt: str, api_key: str = "") -> Image.Imag
         api_key=api_key,
     )
 
-    result = client.image_to_image(
-        image=image,
-        prompt=prompt,
-        model="timbrooks/instruct-pix2pix",
-    )
+   image_bytes = _pil_to_bytes(image)
+
+result = client.image_to_image(
+    image=image_bytes,
+    prompt=prompt,
+    model="timbrooks/instruct-pix2pix",
+)
 
     return result  # PIL.Image
