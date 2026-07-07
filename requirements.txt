@@ -1,4 +1,6 @@
 streamlit
-pillow
-python-dotenv
-requests
+Pillow
+torch
+diffusers
+transformers
+accelerate
