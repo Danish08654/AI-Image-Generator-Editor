@@ -1,20 +1,21 @@
-from PIL import Image
 from gradio_client import Client, handle_file
+from PIL import Image
+from io import BytesIO
+import tempfile
 
-# Replace with your own Space
-SPACE_NAME = "DanishZulfiqar/instruct-pix2pix"
+# Replace this with YOUR Space name
+SPACE_NAME = "DanishZulfiqar/your-image-editor"
 
 client = Client(SPACE_NAME)
 
+def edit_image(image: Image.Image, prompt: str, api_key: str = "") -> Image.Image:
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+        image.save(tmp.name)
 
-def edit_image(image: Image.Image, prompt: str):
+        result = client.predict(
+            image=handle_file(tmp.name),
+            prompt=prompt,
+            api_name="/predict"   # This depends on the Space
+        )
 
-    image.save("temp.png")
-
-    result = client.predict(
-        image=handle_file("temp.png"),
-        prompt=prompt,
-        api_name="/predict"
-    )
-
-    return Image.open(result)
+    return Image.open(result).convert("RGB")
