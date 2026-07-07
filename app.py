@@ -8,7 +8,7 @@ from io import BytesIO
 
 from generator import generate_image
 from editor import edit_image
-from prompt_engine import enhance_prompt, get_negative_prompt
+from prompt_engine import enhance_prompt
 
 # ── PAGE CONFIG ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -24,36 +24,27 @@ st.markdown(
 )
 st.markdown(
     "<p style='text-align:center; color:gray;'>"
-    "Powered by Hugging Face · Stable Diffusion XL · InstructPix2Pix"
+    "Runs fully locally · Stable Diffusion v1.5 · InstructPix2Pix · No API key needed"
     "</p>",
     unsafe_allow_html=True
 )
 st.markdown("---")
 
-# ── SIDEBAR — HF TOKEN (OPTIONAL) ─────────────────────────────────────────────
+# ── SIDEBAR ────────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.header("⚙️ Settings")
-    st.markdown(
-        "**Hugging Face Token** *(optional but recommended)*\n\n"
-        "Free models work without a token but may be rate-limited. "
-        "Get yours at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)."
-    )
-    hf_token = st.text_input(
-        "HF Token",
-        value=os.getenv("HF_TOKEN", ""),
-        type="password",
-        placeholder="hf_xxxxxxxxxxxxxxxxxxxx"
-    )
-    st.session_state["hf_token"] = hf_token
-
-    st.markdown("---")
+    st.header("⚙️ Info")
+    st.success("✅ **No API key required** — models run locally on your machine.")
     st.markdown("**Models used**")
-    st.markdown("🖼 **Generate:** `stabilityai/stable-diffusion-xl-base-1.0`")
+    st.markdown("🖼 **Generate:** `runwayml/stable-diffusion-v1-5`")
     st.markdown("✏️ **Edit:** `timbrooks/instruct-pix2pix`")
     st.markdown("---")
+    st.warning(
+        "⏬ **First run downloads models** (~4GB generate, ~3GB edit). "
+        "Subsequent runs load from cache instantly."
+    )
     st.info(
-        "If you see a **503 error**, the model is cold-starting on HF servers. "
-        "Wait ~30 seconds and click again."
+        "🐢 **CPU mode** is slow (~2–5 min/image). "
+        "A GPU (CUDA) makes generation ~10x faster."
     )
 
 # ── MODE SELECTION ─────────────────────────────────────────────────────────────
@@ -76,48 +67,31 @@ if mode == "🖼 Generate Image":
             placeholder="e.g. futuristic city at night with neon lights",
             height=150
         )
-
         size_choice = st.selectbox(
             "Image Size",
-            ["1024x1024", "1152x896", "896x1152", "768x768"],
-            help="1024×1024 is the default SDXL resolution."
+            ["512x512", "768x512", "512x768", "640x640"],
+            help="512×512 is fastest. Larger sizes need more RAM/time."
         )
-
         st.caption("💡 Style keywords like *anime*, *painting*, *realistic* auto-enhance your prompt.")
         generate_btn = st.button("✨ Generate Image", type="primary", use_container_width=True)
 
     with col2:
         st.subheader("🖼 Output Preview")
-
         if generate_btn:
             if not prompt.strip():
                 st.error("⚠️ Please enter a prompt.")
             else:
                 try:
-                    with st.spinner("⏳ Generating your image (this may take ~30s)…"):
+                    with st.spinner("⏳ Generating… (first run loads model, may take a few minutes)"):
                         final_prompt = enhance_prompt(prompt)
                         st.info(f"✨ **Enhanced Prompt:** {final_prompt}")
-
-                        img = generate_image(
-                            prompt=final_prompt,
-                            size=size_choice,
-                            api_key=st.session_state.get("hf_token", "")
-                        )
-
+                        img = generate_image(prompt=final_prompt, size=size_choice)
                         st.image(img, use_container_width=True, caption="Generated Image")
-
-                        # Download
                         buf = BytesIO()
                         img.save(buf, format="PNG")
                         buf.seek(0)
-                        st.download_button(
-                            label="⬇️ Download Image",
-                            data=buf,
-                            file_name="generated_image.png",
-                            mime="image/png"
-                        )
-                        st.success("✅ Image generated successfully!")
-
+                        st.download_button("⬇️ Download Image", buf, "generated_image.png", "image/png")
+                        st.success("✅ Done!")
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
 
@@ -129,26 +103,17 @@ else:
 
     with col1:
         st.subheader("📤 Upload Panel")
-        uploaded = st.file_uploader(
-            "Upload an image to edit",
-            type=["png", "jpg", "jpeg"]
-        )
-
+        uploaded = st.file_uploader("Upload an image to edit", type=["png", "jpg", "jpeg"])
         prompt = st.text_area(
             "Edit Instructions",
             placeholder="e.g. change the background to a beach at sunset",
             height=150
         )
-
-        st.caption(
-            "💡 Be specific: *'make the sky purple and add stars'* "
-            "works better than *'change colors'*."
-        )
+        st.caption("💡 Be specific: 'make the sky purple and add stars' works better than 'change colors'.")
         edit_btn = st.button("🎨 Apply AI Edit", type="primary", use_container_width=True)
 
     with col2:
         st.subheader("🖼 Output Preview")
-
         if uploaded:
             image = Image.open(uploaded).convert("RGB")
             st.image(image, caption="Original Image", use_container_width=True)
@@ -158,29 +123,15 @@ else:
                 st.error("⚠️ Please enter edit instructions.")
             else:
                 try:
-                    with st.spinner("⏳ Applying AI edit (this may take ~30s)…"):
+                    with st.spinner("⏳ Applying edit… (first run loads model, may take a few minutes)"):
                         final_prompt = enhance_prompt(prompt)
                         st.info(f"✨ **Enhanced Prompt:** {final_prompt}")
-
-                        result = edit_image(
-                            image=image,
-                            prompt=final_prompt,
-                            api_key=st.session_state.get("hf_token", "")
-                        )
-
+                        result = edit_image(image=image, prompt=final_prompt)
                         st.image(result, caption="Edited Image", use_container_width=True)
-
-                        # Download
                         buf = BytesIO()
                         result.save(buf, format="PNG")
                         buf.seek(0)
-                        st.download_button(
-                            label="⬇️ Download Edited Image",
-                            data=buf,
-                            file_name="edited_image.png",
-                            mime="image/png"
-                        )
-                        st.success("✅ Image edited successfully!")
-
+                        st.download_button("⬇️ Download Edited Image", buf, "edited_image.png", "image/png")
+                        st.success("✅ Done!")
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
