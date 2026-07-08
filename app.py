@@ -12,10 +12,6 @@ from prompt_engine import enhance_prompt
 st.set_page_config(page_title="AI Image Generator & Editor", page_icon="🎨", layout="wide")
 
 st.markdown("<h1 style='text-align:center;'>🎨 AI Image Generator & Editor</h1>", unsafe_allow_html=True)
-st.markdown(
-    "<p style='text-align:center;color:gray;'>"
-    "Powered by Hugging Face Serverless Inference API"
-    "</p>", unsafe_allow_html=True
 )
 st.markdown("---")
 
