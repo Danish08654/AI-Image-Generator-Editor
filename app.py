@@ -12,7 +12,7 @@ from prompt_engine import enhance_prompt
 st.set_page_config(page_title="AI Image Generator & Editor", page_icon="🎨", layout="wide")
 
 st.markdown("<h1 style='text-align:center;'>🎨 AI Image Generator & Editor</h1>", unsafe_allow_html=True)
-)
+
 st.markdown("---")
 
 # ── LOAD TOKEN FROM SECRETS (never shown in UI) ────────────────────────────────
