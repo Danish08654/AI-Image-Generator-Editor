@@ -32,7 +32,7 @@ HF_TOKEN = load_token()
 # MODE 
 mode = st.radio("Choose Mode", ["🖼 Generate Image", "✏️ Edit Image"], horizontal=True)
 
-# ── GENERATE ──────────────────────────────────────────────────────────────────
+# GENERATE
 if mode == "🖼 Generate Image":
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -71,8 +71,8 @@ else:
         uploaded = st.file_uploader("Upload an image to edit", type=["png", "jpg", "jpeg"])
         prompt = st.text_area("Edit Instructions",
             placeholder="e.g. change the background to a beach at sunset", height=150)
-        st.caption("💡 Be specific: 'make the sky purple and add stars' works better than 'change colors'.")
-        edit_btn = st.button("🎨 Apply AI Edit", type="primary", use_container_width=True)
+        st.caption(" Be specific: 'make the sky purple and add stars' works better than 'change colors'.")
+        edit_btn = st.button(" Apply AI Edit", type="primary", use_container_width=True)
 
     with col2:
         st.subheader("🖼 Output Preview")
@@ -81,18 +81,18 @@ else:
             st.image(image, caption="Original Image", use_container_width=True)
         if uploaded and edit_btn:
             if not prompt.strip():
-                st.error("⚠️ Please enter edit instructions.")
+                st.error(" Please enter edit instructions.")
             else:
                 try:
-                    with st.spinner("⏳ Editing via HF Inference API…"):
+                    with st.spinner(" Editing via HF Inference API…"):
                         final_prompt = enhance_prompt(prompt)
-                        st.info(f"✨ **Enhanced Prompt:** {final_prompt}")
+                        st.info(f" **Enhanced Prompt:** {final_prompt}")
                         result = edit_image(image=image, prompt=final_prompt, api_key=HF_TOKEN)
                         st.image(result, caption="Edited Image", use_container_width=True)
                         buf = BytesIO()
                         result.save(buf, format="PNG")
                         buf.seek(0)
-                        st.download_button("⬇️ Download Edited Image", buf, "edited_image.png", "image/png")
+                        st.download_button(" Download Edited Image", buf, "edited_image.png", "image/png")
                         st.success("✅ Done!")
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
