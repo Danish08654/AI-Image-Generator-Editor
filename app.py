@@ -15,7 +15,7 @@ st.markdown("<h1 style='text-align:center;'>AI Image Generator & Editor</h1>", u
 
 st.markdown("---")
 
-# ── LOAD TOKEN FROM SECRETS (never shown in UI) ────────────────────────────────
+# LOAD TOKEN FROM SECRETS 
 # Priority: st.secrets > environment variable > empty
 def load_token() -> str:
     # 1. Streamlit secrets (secrets.toml or cloud secrets)
@@ -29,7 +29,7 @@ def load_token() -> str:
 HF_TOKEN = load_token()
 
 
-# ── MODE ───────────────────────────────────────────────────────────────────────
+# MODE 
 mode = st.radio("Choose Mode", ["🖼 Generate Image", "✏️ Edit Image"], horizontal=True)
 
 # ── GENERATE ──────────────────────────────────────────────────────────────────
@@ -41,7 +41,6 @@ if mode == "🖼 Generate Image":
             placeholder="e.g. futuristic city at night with neon lights", height=150)
         size_choice = st.selectbox("Image Size",
             ["1024x1024", "1152x896", "896x1152", "768x768"])
-        st.caption("💡 Keywords like *anime*, *painting*, *realistic* auto-enhance your prompt.")
         gen_btn = st.button("✨ Generate Image", type="primary", use_container_width=True)
 
     with col2:
@@ -64,7 +63,7 @@ if mode == "🖼 Generate Image":
                 except Exception as e:
                     st.error(f"❌ Error: {e}")
 
-# ── EDIT ──────────────────────────────────────────────────────────────────────
+#  EDIT 
 else:
     col1, col2 = st.columns([1, 2])
     with col1:
